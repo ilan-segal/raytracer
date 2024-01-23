@@ -1,0 +1,19 @@
+{
+	"camera": {
+		"position": [0, 0, 0],
+		"direction": [1, 0, 0],
+		"screenDistance": 1
+	},
+	"objects": [
+		{
+			"material": {
+				"colour": [255, 255, 255]
+			},
+			"shape": {
+				"type": "sphere",
+				"centre": [1, 2, 3],
+				"radius": 420
+			}
+		}
+	]
+}
