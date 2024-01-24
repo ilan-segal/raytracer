@@ -1,6 +1,6 @@
 use nalgebra as na;
 
-use image::{ImageBuffer, Rgb};
+use image::{ImageBuffer, ImageError, Rgb};
 use serde::Deserialize;
 use std::error::Error;
 use std::fs::File;
@@ -8,7 +8,8 @@ use std::io::BufReader;
 
 const UP: FVec = na::Vector3::new(0.0, 0.0, 1.0);
 
-type FVec = na::Vector3<f32>;
+type Float = f64;
+type FVec = na::Vector3<Float>;
 
 #[derive(Debug)]
 struct Ray {
@@ -31,7 +32,7 @@ struct LightSource {
 }
 
 struct Intersection {
-    t: f32,
+    t: Float,
     pos: FVec,
     normal: FVec,
 }
@@ -39,7 +40,7 @@ struct Intersection {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase", tag = "type")]
 enum Shape {
-    Sphere { centre: FVec, radius: f32 },
+    Sphere { centre: FVec, radius: Float },
 }
 
 impl Shape {
@@ -48,7 +49,7 @@ impl Shape {
         P = ray.origin + ray.direction * t
     If no such t exists, return None
      */
-    fn intersection(&self, ray: &Ray, min_distance: f32) -> Option<Intersection> {
+    fn intersection(&self, ray: &Ray, min_distance: Float) -> Option<Intersection> {
         match self {
             Shape::Sphere { centre, radius } => {
                 let a = ray.direction.norm_squared();
@@ -97,13 +98,13 @@ fn clamp<T: PartialOrd>(x: T, min: T, max: T) -> T {
     }
 }
 
-fn channel_float_to_int(value: f32) -> u8 {
+fn channel_float_to_int(value: Float) -> u8 {
     let integer = (value * 255.0) as i32;
     clamp(integer, 0, 255) as u8
 }
 
 impl SceneObject {
-    fn intersect(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, FVec)> {
+    fn intersect(&self, ray: &Ray, min_distance: Float) -> Option<(Intersection, FVec)> {
         self.shape
             .intersection(ray, min_distance)
             .map(|t| (t, self.material.colour))
@@ -115,9 +116,9 @@ impl SceneObject {
 struct Camera {
     position: FVec,
     direction: FVec,
-    screen_distance: f32,
-    screen_width: f32,
-    screen_height: f32,
+    screen_distance: Float,
+    screen_width: Float,
+    screen_height: Float,
     screen_columns: u32,
     screen_rows: u32,
 }
@@ -132,19 +133,18 @@ impl Camera {
 
     fn get_ray(&self, x: u32, y: u32) -> Ray {
         // Center of screen is origin
-        let x_screen = ((x as i64) - (self.screen_columns as i64 / 2)) as f32
-            / self.screen_columns as f32
+        let x_screen = ((x as i64) - (self.screen_columns as i64 / 2)) as Float
+            / self.screen_columns as Float
             * self.screen_width
             * 0.5;
-        let y_screen = ((y as i64) - (self.screen_rows as i64 / 2)) as f32
-            / self.screen_rows as f32
+        let y_screen = ((y as i64) - (self.screen_rows as i64 / 2)) as Float
+            / self.screen_rows as Float
             * self.screen_height
             * -0.5;
         let (u, v, w) = self.get_basis_vectors();
-        let s = (self.screen_distance * u) + (x_screen * v) + (y_screen * w);
         Ray {
             origin: self.position,
-            direction: s - self.position,
+            direction: (self.screen_distance * u) + (x_screen * v) + (y_screen * w),
         }
     }
 }
@@ -183,7 +183,7 @@ impl Scene {
         value
     }
 
-    fn get_intersection(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, FVec)> {
+    fn get_intersection(&self, ray: &Ray, min_distance: Float) -> Option<(Intersection, FVec)> {
         self.objects
             .iter()
             .filter_map(|object| object.intersect(ray, min_distance))
@@ -198,20 +198,27 @@ impl Scene {
             .map(|colour| colour.0.component_mul(&colour.1))
             .unwrap_or(na::Vector3::zeros())
     }
+
+    fn render_to_file(&self, path: &str) -> Result<(), ImageError> {
+        let image: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_par_fn(
+            self.camera.screen_columns,
+            self.camera.screen_rows,
+            |x, y| {
+                let rgb = self
+                    .get_pixel(x, y)
+                    .map(channel_float_to_int)
+                    .into();
+                Rgb(rgb)
+            },
+        );
+        image.save(path)
+    }
 }
 
 fn main() {
     let scene = Scene::from_file("scene.json").unwrap();
     println!("{:?}", scene);
-    let image = ImageBuffer::from_fn(
-        scene.camera.screen_columns,
-        scene.camera.screen_rows,
-        |x, y| {
-            let rgb = scene
-                .get_pixel(x, y)
-                .map(channel_float_to_int);
-            Rgb(rgb.into())
-        },
-    );
-    image.save("output.png").unwrap();
+    scene
+        .render_to_file("output.png")
+        .unwrap();
 }
