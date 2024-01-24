@@ -11,7 +11,7 @@
 	"globalIllumination": [0.05, 0.05, 0.05],
 	"lights": [
 		{
-			"pos": [0, 0, 10],
+			"pos": [6, -10.5, 0],
 			"colour": [1, 1, 1]
 		}
 	],
@@ -22,8 +22,8 @@
 			},
 			"shape": {
 				"type": "sphere",
-				"centre": [6, 0, 0],
-				"radius": 1
+				"centre": [5.4, 0, 0.5],
+				"radius": 0.25
 			}
 		}, 
 		{
