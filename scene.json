@@ -8,17 +8,25 @@
 		"screenColumns": 1080,
 		"screenRows": 810 
 	},
-	"globalIllumination": [0.05, 0.05, 0.05],
+	"globalIllumination": [0.01, 0.01, 0.01],
 	"lights": [
 		{
 			"pos": [6, -10.5, 0],
-			"colour": [1, 1, 1]
+			"colour": [0.5, 0.25, 0.25]
+		},
+		{
+			"pos": [6.5, -10.5, 0],
+			"colour": [0.25, 0.5, 0.25]
+		},
+		{
+			"pos": [7, -10.5, 0.5],
+			"colour": [0.25, 0.25, 0.5]
 		}
 	],
 	"objects": [
 		{
 			"material": {
-				"colour": [0, 1, 1]
+				"colour": [1, 1, 1]
 			},
 			"shape": {
 				"type": "sphere",
@@ -28,7 +36,7 @@
 		}, 
 		{
 			"material": {
-				"colour": [1, 1, 0]
+				"colour": [1, 1, 1]
 			},
 			"shape": {
 				"type": "sphere",
