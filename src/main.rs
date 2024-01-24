@@ -103,13 +103,10 @@ fn channel_float_to_int(value: f32) -> u8 {
 }
 
 impl SceneObject {
-    fn intersect(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, Rgb<f32>)> {
-        self.shape.intersection(ray, min_distance).map(|t| {
-            let [r, g, b] = self.material.colour.as_slice() else {
-                panic!("Unable to unpack RGB values from colour")
-            };
-            (t, Rgb([*r, *g, *b]))
-        })
+    fn intersect(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, FVec)> {
+        self.shape
+            .intersection(ray, min_distance)
+            .map(|t| (t, self.material.colour))
     }
 }
 
@@ -169,7 +166,7 @@ impl Scene {
         Ok(scene)
     }
 
-    fn get_illumination(&self, p: Intersection) -> Rgb<f32> {
+    fn get_illumination(&self, p: Intersection) -> FVec {
         let mut value = self.global_illumination;
         for light in self.lights.iter() {
             let ray = Ray {
@@ -181,31 +178,25 @@ impl Scene {
                 continue;
             }
             let coeff = clamp(p.normal.angle(&ray.direction).cos(), 0., 1.);
-            for i in 0..3 {
-                value[i] += coeff * light.colour[i];
-            }
+            value += coeff * light.colour;
         }
-        Rgb(std::array::from_fn(|i| value[i]))
+        value
     }
 
-    fn get_intersection(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, Rgb<f32>)> {
+    fn get_intersection(&self, ray: &Ray, min_distance: f32) -> Option<(Intersection, FVec)> {
         self.objects
             .iter()
             .filter_map(|object| object.intersect(ray, min_distance))
             .min_by(|a, b| a.0.t.partial_cmp(&b.0.t).unwrap())
     }
 
-    fn get_pixel(&self, x: u32, y: u32) -> Rgb<f32> {
+    fn get_pixel(&self, x: u32, y: u32) -> FVec {
         let ray = self.camera.get_ray(x, y);
         // println!("{:?}", ray);
         self.get_intersection(&ray, 0.0)
             .map(|p| (self.get_illumination(p.0), p.1))
-            .map(|colour| {
-                let a = colour.0;
-                let b = std::array::from_fn(|i| a[i] * colour.1[i]);
-                Rgb(b)
-            })
-            .unwrap_or(Rgb([0.0, 0.0, 0.0]))
+            .map(|colour| colour.0.component_mul(&colour.1))
+            .unwrap_or(na::Vector3::zeros())
     }
 }
 
@@ -216,8 +207,10 @@ fn main() {
         scene.camera.screen_columns,
         scene.camera.screen_rows,
         |x, y| {
-            let rgb = scene.get_pixel(x, y).0.map(channel_float_to_int);
-            Rgb(rgb)
+            let rgb = scene
+                .get_pixel(x, y)
+                .map(channel_float_to_int);
+            Rgb(rgb.into())
         },
     );
     image.save("output.png").unwrap();
