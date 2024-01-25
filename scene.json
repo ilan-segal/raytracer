@@ -3,7 +3,7 @@
 		"position": [1, 0, 0],
 		"direction": [1, 0, 0],
 		"screenDistance": 1,
-		"screenWidth": 1.333,
+		"screenWidth": 1.33333,
 		"screenHeight": 1,
 		"screenColumns": 1080,
 		"screenRows": 810 
