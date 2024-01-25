@@ -17,11 +17,14 @@ struct Ray {
     direction: FVec,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 struct Material {
     colour: FVec,
-    // TODO: BP and stuff
+    k_diffuse: Float,
+    k_ambient: Float,
+    k_specular: Float,
+    shine: Float,
 }
 
 #[derive(Deserialize, Debug)]
@@ -104,10 +107,9 @@ fn channel_float_to_int(value: Float) -> u8 {
 }
 
 impl SceneObject {
-    fn intersect(&self, ray: &Ray, min_distance: Float) -> Option<(Intersection, FVec)> {
+    fn intersect(&self, ray: &Ray, min_distance: Float) -> Option<Intersection> {
         self.shape
             .intersection(ray, min_distance)
-            .map(|t| (t, self.material.colour))
     }
 }
 
@@ -153,7 +155,7 @@ impl Camera {
 #[serde(rename_all = "camelCase")]
 struct Scene {
     camera: Camera,
-    global_illumination: FVec,
+    ambient_light: FVec,
     lights: Vec<LightSource>,
     objects: Vec<SceneObject>,
 }
@@ -166,36 +168,85 @@ impl Scene {
         Ok(scene)
     }
 
-    fn get_illumination(&self, p: Intersection) -> FVec {
-        let mut value = self.global_illumination;
-        for light in self.lights.iter() {
-            let ray = Ray {
-                origin: p.pos,
-                direction: (light.pos - p.pos).normalize(),
-            };
-            let t = self.get_intersection(&ray, 0.1);
-            if t.is_some() {
-                continue;
-            }
-            let coeff = clamp(p.normal.angle(&ray.direction).cos(), 0., 1.);
-            value += coeff * light.colour;
-        }
-        value
-    }
-
-    fn get_intersection(&self, ray: &Ray, min_distance: Float) -> Option<(Intersection, FVec)> {
+    fn _get_intersection(
+        &self,
+        ray: &Ray,
+        min_distance: Float,
+    ) -> Option<(Intersection, Material)> {
         self.objects
             .iter()
-            .filter_map(|object| object.intersect(ray, min_distance))
+            .filter_map(|object| {
+                object
+                    .intersect(ray, min_distance)
+                    .map(|x| (x, object.material))
+            })
             .min_by(|a, b| a.0.t.partial_cmp(&b.0.t).unwrap())
     }
 
-    fn get_pixel(&self, x: u32, y: u32) -> FVec {
+    fn _get_diffuse_lighting(
+        &self,
+        intersection: &Intersection,
+        material: &Material,
+        light: &LightSource,
+        ray: &Ray,
+    ) -> FVec {
+        let coeff = clamp(intersection.normal.dot(&ray.direction), 0., 1.);
+        coeff
+            * light
+                .colour
+                .component_mul(&material.colour)
+    }
+
+    fn _get_specular_lighting(
+        &self,
+        intersection: &Intersection,
+        material: &Material,
+        light: &LightSource,
+        ray: &Ray,
+    ) -> FVec {
+        let l = light.pos - intersection.pos;
+        let v = ray.origin - intersection.pos;
+        let h = (l + v).normalize();
+        h.dot(&intersection.normal)
+            .powf(material.shine)
+            * light.colour
+    }
+
+    fn _get_surface_point_colour(&self, intersection: &Intersection, material: &Material) -> FVec {
+        let ambient = material.k_ambient
+            * self
+                .ambient_light
+                .component_mul(&material.colour);
+        let light_dependent_colouring: FVec = self
+            .lights
+            .iter()
+            .filter_map(|light| {
+                let ray = Ray {
+                    origin: intersection.pos,
+                    direction: (light.pos - intersection.pos).normalize(),
+                };
+                let t = self._get_intersection(&ray, 0.1);
+                if t.is_some() {
+                    return None;
+                }
+                Some((light, ray))
+            })
+            .map(|(light, ray)| {
+                let diffuse_light = material.k_diffuse
+                    * self._get_diffuse_lighting(intersection, material, light, &ray);
+                let specular_reflectance = material.k_specular
+                    * self._get_specular_lighting(intersection, material, light, &ray);
+                diffuse_light + specular_reflectance
+            })
+            .sum();
+        ambient + light_dependent_colouring
+    }
+
+    fn _get_pixel(&self, x: u32, y: u32) -> FVec {
         let ray = self.camera.get_ray(x, y);
         // println!("{:?}", ray);
-        self.get_intersection(&ray, 0.0)
-            .map(|p| (self.get_illumination(p.0), p.1))
-            .map(|colour| colour.0.component_mul(&colour.1))
+        self._get_intersection(&ray, 0.0)
+            .map(|(i, m)| self._get_surface_point_colour(&i, &m))
             .unwrap_or(na::Vector3::zeros())
     }
 
@@ -205,7 +256,7 @@ impl Scene {
             self.camera.screen_rows,
             |x, y| {
                 let rgb = self
-                    .get_pixel(x, y)
+                    ._get_pixel(x, y)
                     .map(channel_float_to_int)
                     .into();
                 Rgb(rgb)

@@ -8,39 +8,25 @@
 		"screenColumns": 1080,
 		"screenRows": 810 
 	},
-	"globalIllumination": [0.01, 0.01, 0.01],
+	"ambientLight": [0.1, 0.1, 0.1],
 	"lights": [
 		{
-			"pos": [6, -10.5, 0],
-			"colour": [0.5, 0.25, 0.25]
-		},
-		{
-			"pos": [6.5, -10.5, 0],
-			"colour": [0.25, 0.5, 0.25]
-		},
-		{
-			"pos": [7, -10.5, 0.5],
-			"colour": [0.25, 0.25, 0.5]
+			"pos": [3, -1.5, 1],
+			"colour": [1, 1, 1]
 		}
 	],
 	"objects": [
 		{
 			"material": {
-				"colour": [1, 1, 1]
+				"colour": [0.2, 0.2, 1],
+				"kDiffuse": 1,
+				"kAmbient": 1,
+				"kSpecular": 0.75,
+				"shine": 100
 			},
 			"shape": {
 				"type": "sphere",
-				"centre": [5.4, -1.0, 0.5],
-				"radius": 0.25
-			}
-		}, 
-		{
-			"material": {
-				"colour": [1, 1, 1]
-			},
-			"shape": {
-				"type": "sphere",
-				"centre": [6, 0.75, 0],
+				"centre": [6, 0, 0],
 				"radius": 1
 			}
 		}
