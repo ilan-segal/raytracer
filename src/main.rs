@@ -240,7 +240,7 @@ impl Scene {
         ray: &Ray,
         num_bounces: u8,
     ) -> FVec {
-        if num_bounces > MAX_BOUNCES {
+        if num_bounces > MAX_BOUNCES || material.k_reflect == 0.0 {
             return FVec::zeros();
         }
         let ray_proj_normal = ray.direction.dot(&intersection.normal) * intersection.normal;
