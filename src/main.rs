@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 const UP: FVec = na::Vector3::new(0.0, 0.0, 1.0);
-const MAX_BOUNCES: u8 = 10;
+const MAX_BOUNCES: u8 = 100;
 
 type Float = f64;
 type FVec = na::Vector3<Float>;
@@ -273,12 +273,16 @@ impl Scene {
             .lights
             .iter()
             .filter_map(|light| {
+                let point_to_light = light.pos - intersection.pos;
+                let distance_to_light = point_to_light.norm();
                 let ray = Ray {
                     origin: intersection.pos,
-                    direction: (light.pos - intersection.pos).normalize(),
+                    direction: point_to_light / distance_to_light,
                 };
-                let t = self._get_intersection(&ray, 0.1);
-                if t.is_some() {
+                let i = self._get_intersection(&ray, 0.1);
+                if i.filter(|x| x.0.t < distance_to_light)
+                    .is_some()
+                {
                     return None;
                 }
                 Some((light, ray))

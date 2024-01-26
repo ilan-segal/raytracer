@@ -1,18 +1,18 @@
 {
 	"camera": {
-		"position": [-10, 0, 0],
-		"direction": [1, 0, 0],
+		"position": [-10, 0, 2],
+		"direction": [1, 0, -0.15],
 		"screenDistance": 1,
 		"screenWidth": 1.33333,
 		"screenHeight": 1,
 		"screenColumns": 1080,
 		"screenRows": 810 
 	},
-	"defaultColour": [0.0, 0.0, 0.0],
+	"defaultColour": [0.01, 0.01, 0.01],
 	"ambientLight": [0.1, 0.1, 0.1],
 	"lights": [
 		{
-			"pos": [3, -1.5, 1],
+			"pos": [4, -1.5, 1],
 			"colour": [1, 1, 1],
 			"intensity": 5.0
 		}
@@ -21,16 +21,31 @@
 		{
 			"material": {
 				"colour": [0.2, 0.2, 1],
-				"kDiffuse": 0.99,
-				"kAmbient": 0.01,
+				"kDiffuse": 0.5,
+				"kAmbient": 0.5,
 				"kSpecular": 0.75,
-				"kReflect": 0.0,
+				"kReflect": 0.5,
 				"shine": 100
 			},
 			"shape": {
 				"type": "sphere",
 				"centre": [6, 0, 0],
 				"radius": 1
+			}
+		},
+		{
+			"material": {
+				"colour": [1, 0.2, 0.2],
+				"kDiffuse": 0.5,
+				"kAmbient": 0.5,
+				"kSpecular": 0.75,
+				"kReflect": 0.5,
+				"shine": 100
+			},
+			"shape": {
+				"type": "sphere",
+				"centre": [5, 1, -0.6],
+				"radius": 0.4
 			}
 		},
 		{
@@ -46,6 +61,21 @@
 				"type": "plane",
 				"point": [0, 0, -1],
 				"normal": [0, 0, 1]
+			}
+		},
+		{
+			"material": {
+				"colour": [1, 1, 1],
+				"kDiffuse": 0.9,
+				"kAmbient": 0.1,
+				"kSpecular": 0.0,
+				"kReflect": 0.1,
+				"shine": 2
+			},
+			"shape": {
+				"type": "plane",
+				"point": [0, 10, -0.9],
+				"normal": [-1, -1, 0]
 			}
 		}
 	]
