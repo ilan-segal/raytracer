@@ -256,12 +256,7 @@ impl Scene {
             origin: intersection.pos,
             direction: reflected_ray_direction,
         };
-        let reflected_ray_colour: na::Matrix<
-            f64,
-            na::Const<3>,
-            na::Const<1>,
-            na::ArrayStorage<f64, 3, 1>,
-        > = self._get_ray_colour(&reflected_ray, 0.0001, num_bounces + 1);
+        let reflected_ray_colour = self._get_ray_colour(&reflected_ray, 0.0001, num_bounces + 1);
         material.k_reflect * &reflected_ray_colour
     }
 
