@@ -40,6 +40,7 @@ struct Material {
 struct LightSource {
     colour: FVec,
     pos: FVec,
+    intensity: Float,
 }
 
 struct Intersection {
@@ -217,8 +218,10 @@ impl Scene {
         light: &LightSource,
         ray: &Ray,
     ) -> FVec {
+        let distance_squared = (intersection.pos - light.pos).norm_squared();
         let coeff = clamp(intersection.normal.dot(&ray.direction), 0., 1.);
-        coeff
+        coeff / distance_squared
+            * light.intensity
             * light
                 .colour
                 .component_mul(&material.colour)
@@ -231,13 +234,14 @@ impl Scene {
         light: &LightSource,
         ray: &Ray,
     ) -> FVec {
+        let distance_squared = (intersection.pos - light.pos).norm_squared();
         let l = light.pos - intersection.pos;
         let v = ray.origin - intersection.pos;
         let h = (l + v).normalize();
         let coeff = h
             .dot(&intersection.normal)
             .powf(material.shine);
-        clamp(coeff, 0.0, 1.0) * light.colour
+        clamp(coeff, 0.0, 1.0) * light.colour / distance_squared * light.intensity
     }
 
     fn _get_reflection(

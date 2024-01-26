@@ -13,7 +13,8 @@
 	"lights": [
 		{
 			"pos": [3, -1.5, 1],
-			"colour": [1, 1, 1]
+			"colour": [1, 1, 1],
+			"intensity": 5.0
 		}
 	],
 	"objects": [
