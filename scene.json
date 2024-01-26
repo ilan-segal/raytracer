@@ -8,6 +8,7 @@
 		"screenColumns": 1080,
 		"screenRows": 810 
 	},
+	"defaultColour": [0.0, 0.0, 0.0],
 	"ambientLight": [0.1, 0.1, 0.1],
 	"lights": [
 		{

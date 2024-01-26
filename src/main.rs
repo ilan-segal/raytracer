@@ -180,6 +180,7 @@ impl Camera {
 #[serde(rename_all = "camelCase")]
 struct Scene {
     camera: Camera,
+    default_colour: FVec,
     ambient_light: FVec,
     lights: Vec<LightSource>,
     objects: Vec<SceneObject>,
@@ -287,7 +288,7 @@ impl Scene {
                 let reflection = self._get_reflection(&i, &m, &ray, num_bounces);
                 object_colour + reflection
             })
-            .unwrap_or(na::Vector3::zeros())
+            .unwrap_or(self.default_colour)
     }
 
     fn render_to_file(&self, path: &str) -> Result<(), ImageError> {
