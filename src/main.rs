@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 const UP: FVec = na::Vector3::new(0.0, 0.0, 1.0);
+const MAX_BOUNCES: u8 = 10;
 
 type Float = f64;
 type FVec = na::Vector3<Float>;
@@ -30,6 +31,7 @@ struct Material {
     k_diffuse: Float,
     k_ambient: Float,
     k_specular: Float,
+    k_reflect: Float,
     shine: Float,
 }
 
@@ -231,6 +233,26 @@ impl Scene {
         clamp(coeff, 0.0, 1.0) * light.colour
     }
 
+    fn _get_reflection(
+        &self,
+        intersection: &Intersection,
+        material: &Material,
+        ray: &Ray,
+        num_bounces: u8,
+    ) -> FVec {
+        if num_bounces > MAX_BOUNCES {
+            return FVec::zeros();
+        }
+        let ray_proj_normal = ray.direction.dot(&intersection.normal) * intersection.normal;
+        let reflected_ray_direction = ray.direction - 2.0 * ray_proj_normal;
+        let reflected_ray = Ray {
+            origin: intersection.pos,
+            direction: reflected_ray_direction,
+        };
+        let reflected_ray_colour = self._get_ray_colour(&reflected_ray, 0.0, num_bounces + 1);
+        material.k_reflect * material.colour.component_mul(&reflected_ray_colour)
+    }
+
     fn _get_surface_point_colour(&self, intersection: &Intersection, material: &Material) -> FVec {
         let ambient = material.k_ambient * self.ambient_light.component_mul(&material.colour);
         let light_dependent_colouring: FVec = self
@@ -258,9 +280,13 @@ impl Scene {
         ambient + light_dependent_colouring
     }
 
-    fn _get_ray_colour(&self, ray: &Ray) -> FVec {
-        self._get_intersection(&ray, 0.0)
-            .map(|(i, m)| self._get_surface_point_colour(&i, &m))
+    fn _get_ray_colour(&self, ray: &Ray, min_distance: Float, num_bounces: u8) -> FVec {
+        self._get_intersection(&ray, min_distance)
+            .map(|(i, m)| {
+                let object_colour = self._get_surface_point_colour(&i, &m);
+                let reflection = self._get_reflection(&i, &m, &ray, num_bounces);
+                object_colour + reflection
+            })
             .unwrap_or(na::Vector3::zeros())
     }
 
@@ -270,7 +296,10 @@ impl Scene {
             self.camera.screen_rows,
             |x, y| {
                 let ray = self.camera.get_ray(x, y);
-                let rgb = self._get_ray_colour(&ray).map(channel_float_to_int).into();
+                let rgb = self
+                    ._get_ray_colour(&ray, 0.0, 0)
+                    .map(channel_float_to_int)
+                    .into();
                 Rgb(rgb)
             },
         );

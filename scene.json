@@ -22,6 +22,7 @@
 				"kDiffuse": 1,
 				"kAmbient": 1,
 				"kSpecular": 0.75,
+				"kReflect": 0.0,
 				"shine": 100
 			},
 			"shape": {
@@ -32,10 +33,11 @@
 		},
 		{
 			"material": {
-				"colour": [0.5, 0.5, 0.5],
-				"kDiffuse": 1,
-				"kAmbient": 1,
+				"colour": [1.0, 1.0, 1.0],
+				"kDiffuse": 0.1,
+				"kAmbient": 0.1,
 				"kSpecular": 0,
+				"kReflect": 0.5,
 				"shine": 100
 			},
 			"shape": {
