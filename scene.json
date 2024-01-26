@@ -11,7 +11,7 @@
 	"ambientLight": [0.1, 0.1, 0.1],
 	"lights": [
 		{
-			"pos": [3, -1.5, 2],
+			"pos": [3, -1.5, 1],
 			"colour": [1, 1, 1]
 		}
 	],
@@ -19,8 +19,8 @@
 		{
 			"material": {
 				"colour": [0.2, 0.2, 1],
-				"kDiffuse": 1,
-				"kAmbient": 1,
+				"kDiffuse": 0.99,
+				"kAmbient": 0.01,
 				"kSpecular": 0.75,
 				"kReflect": 0.0,
 				"shine": 100
@@ -37,7 +37,7 @@
 				"kDiffuse": 0.1,
 				"kAmbient": 0.1,
 				"kSpecular": 0,
-				"kReflect": 0.5,
+				"kReflect": 0.8,
 				"shine": 100
 			},
 			"shape": {

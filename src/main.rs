@@ -249,7 +249,7 @@ impl Scene {
             origin: intersection.pos,
             direction: reflected_ray_direction,
         };
-        let reflected_ray_colour = self._get_ray_colour(&reflected_ray, 0.0, num_bounces + 1);
+        let reflected_ray_colour = self._get_ray_colour(&reflected_ray, 0.0001, num_bounces + 1);
         material.k_reflect * material.colour.component_mul(&reflected_ray_colour)
     }
 
