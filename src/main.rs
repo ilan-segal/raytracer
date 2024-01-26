@@ -17,6 +17,12 @@ struct Ray {
     direction: FVec,
 }
 
+impl Ray {
+    fn extend(&self, t: Float) -> FVec {
+        self.origin + t * self.direction
+    }
+}
+
 #[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 struct Material {
@@ -44,6 +50,7 @@ struct Intersection {
 #[serde(rename_all = "camelCase", tag = "type")]
 enum Shape {
     Sphere { centre: FVec, radius: Float },
+    Plane { point: FVec, normal: FVec },
 }
 
 impl Shape {
@@ -68,10 +75,10 @@ impl Shape {
                 [t1, t2]
                     .iter()
                     .copied()
-                    .filter(|t| *t >= min_distance)
+                    .filter(|t| *t > min_distance)
                     .min_by(|a, b| a.partial_cmp(&b).unwrap())
                     .map(|t| {
-                        let point = ray.origin + t * ray.direction;
+                        let point = ray.extend(t);
                         let normal = (point - centre).normalize();
                         Intersection {
                             t: t,
@@ -79,6 +86,23 @@ impl Shape {
                             normal: normal,
                         }
                     })
+            }
+            Shape::Plane { point, normal } => {
+                let n_dot_d = normal.dot(&ray.direction);
+                if n_dot_d == 0.0 {
+                    return None;
+                }
+                let a_minus_p = point - ray.origin;
+                let t = normal.dot(&a_minus_p) / n_dot_d;
+                if t <= min_distance {
+                    None
+                } else {
+                    Some(Intersection {
+                        t: t,
+                        pos: ray.extend(t),
+                        normal: *normal,
+                    })
+                }
             }
         }
     }
@@ -108,8 +132,7 @@ fn channel_float_to_int(value: Float) -> u8 {
 
 impl SceneObject {
     fn intersect(&self, ray: &Ray, min_distance: Float) -> Option<Intersection> {
-        self.shape
-            .intersection(ray, min_distance)
+        self.shape.intersection(ray, min_distance)
     }
 }
 
@@ -191,10 +214,7 @@ impl Scene {
         ray: &Ray,
     ) -> FVec {
         let coeff = clamp(intersection.normal.dot(&ray.direction), 0., 1.);
-        coeff
-            * light
-                .colour
-                .component_mul(&material.colour)
+        coeff * light.colour.component_mul(&material.colour)
     }
 
     fn _get_specular_lighting(
@@ -207,16 +227,12 @@ impl Scene {
         let l = light.pos - intersection.pos;
         let v = ray.origin - intersection.pos;
         let h = (l + v).normalize();
-        h.dot(&intersection.normal)
-            .powf(material.shine)
-            * light.colour
+        let coeff = h.dot(&intersection.normal).powf(material.shine);
+        clamp(coeff, 0.0, 1.0) * light.colour
     }
 
     fn _get_surface_point_colour(&self, intersection: &Intersection, material: &Material) -> FVec {
-        let ambient = material.k_ambient
-            * self
-                .ambient_light
-                .component_mul(&material.colour);
+        let ambient = material.k_ambient * self.ambient_light.component_mul(&material.colour);
         let light_dependent_colouring: FVec = self
             .lights
             .iter()
@@ -242,9 +258,7 @@ impl Scene {
         ambient + light_dependent_colouring
     }
 
-    fn _get_pixel(&self, x: u32, y: u32) -> FVec {
-        let ray = self.camera.get_ray(x, y);
-        // println!("{:?}", ray);
+    fn _get_ray_colour(&self, ray: &Ray) -> FVec {
         self._get_intersection(&ray, 0.0)
             .map(|(i, m)| self._get_surface_point_colour(&i, &m))
             .unwrap_or(na::Vector3::zeros())
@@ -255,10 +269,8 @@ impl Scene {
             self.camera.screen_columns,
             self.camera.screen_rows,
             |x, y| {
-                let rgb = self
-                    ._get_pixel(x, y)
-                    .map(channel_float_to_int)
-                    .into();
+                let ray = self.camera.get_ray(x, y);
+                let rgb = self._get_ray_colour(&ray).map(channel_float_to_int).into();
                 Rgb(rgb)
             },
         );
@@ -269,7 +281,5 @@ impl Scene {
 fn main() {
     let scene = Scene::from_file("scene.json").unwrap();
     println!("{:?}", scene);
-    scene
-        .render_to_file("output.png")
-        .unwrap();
+    scene.render_to_file("output.png").unwrap();
 }

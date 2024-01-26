@@ -1,6 +1,6 @@
 {
 	"camera": {
-		"position": [1, 0, 0],
+		"position": [-10, 0, 0],
 		"direction": [1, 0, 0],
 		"screenDistance": 1,
 		"screenWidth": 1.33333,
@@ -11,7 +11,7 @@
 	"ambientLight": [0.1, 0.1, 0.1],
 	"lights": [
 		{
-			"pos": [3, -1.5, 1],
+			"pos": [3, -1.5, 2],
 			"colour": [1, 1, 1]
 		}
 	],
@@ -28,6 +28,20 @@
 				"type": "sphere",
 				"centre": [6, 0, 0],
 				"radius": 1
+			}
+		},
+		{
+			"material": {
+				"colour": [0.5, 0.5, 0.5],
+				"kDiffuse": 1,
+				"kAmbient": 1,
+				"kSpecular": 0,
+				"shine": 100
+			},
+			"shape": {
+				"type": "plane",
+				"point": [0, 0, -1],
+				"normal": [0, 0, 1]
 			}
 		}
 	]
