@@ -134,7 +134,8 @@ fn channel_float_to_int(value: Float) -> u8 {
 
 impl SceneObject {
     fn intersect(&self, ray: &Ray, min_distance: Float) -> Option<Intersection> {
-        self.shape.intersection(ray, min_distance)
+        self.shape
+            .intersection(ray, min_distance)
     }
 }
 
@@ -217,7 +218,10 @@ impl Scene {
         ray: &Ray,
     ) -> FVec {
         let coeff = clamp(intersection.normal.dot(&ray.direction), 0., 1.);
-        coeff * light.colour.component_mul(&material.colour)
+        coeff
+            * light
+                .colour
+                .component_mul(&material.colour)
     }
 
     fn _get_specular_lighting(
@@ -230,7 +234,9 @@ impl Scene {
         let l = light.pos - intersection.pos;
         let v = ray.origin - intersection.pos;
         let h = (l + v).normalize();
-        let coeff = h.dot(&intersection.normal).powf(material.shine);
+        let coeff = h
+            .dot(&intersection.normal)
+            .powf(material.shine);
         clamp(coeff, 0.0, 1.0) * light.colour
     }
 
@@ -250,12 +256,20 @@ impl Scene {
             origin: intersection.pos,
             direction: reflected_ray_direction,
         };
-        let reflected_ray_colour = self._get_ray_colour(&reflected_ray, 0.0001, num_bounces + 1);
-        material.k_reflect * material.colour.component_mul(&reflected_ray_colour)
+        let reflected_ray_colour: na::Matrix<
+            f64,
+            na::Const<3>,
+            na::Const<1>,
+            na::ArrayStorage<f64, 3, 1>,
+        > = self._get_ray_colour(&reflected_ray, 0.0001, num_bounces + 1);
+        material.k_reflect * &reflected_ray_colour
     }
 
     fn _get_surface_point_colour(&self, intersection: &Intersection, material: &Material) -> FVec {
-        let ambient = material.k_ambient * self.ambient_light.component_mul(&material.colour);
+        let ambient = material.k_ambient
+            * self
+                .ambient_light
+                .component_mul(&material.colour);
         let light_dependent_colouring: FVec = self
             .lights
             .iter()
@@ -311,5 +325,7 @@ impl Scene {
 fn main() {
     let scene = Scene::from_file("scene.json").unwrap();
     println!("{:?}", scene);
-    scene.render_to_file("output.png").unwrap();
+    scene
+        .render_to_file("output.png")
+        .unwrap();
 }

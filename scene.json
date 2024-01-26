@@ -34,12 +34,12 @@
 		},
 		{
 			"material": {
-				"colour": [1.0, 1.0, 1.0],
-				"kDiffuse": 0.1,
+				"colour": [0.1, 0.1, 0.1],
+				"kDiffuse": 0.4,
 				"kAmbient": 0.1,
-				"kSpecular": 0,
-				"kReflect": 0.8,
-				"shine": 100
+				"kSpecular": 0.1,
+				"kReflect": 0.5,
+				"shine": 2
 			},
 			"shape": {
 				"type": "plane",
